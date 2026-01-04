@@ -46,6 +46,6 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           # Имя файла должно совпадать с тем, что генерирует CPack
-          asset_path: ./helloworld-0.0.${{ github.run_number }}-Linux.deb
-          asset_name: helloworld-0.0.${{ github.run_number }}-Linux.deb
+          asset_path: ./ip_filter-0.0.${{ github.run_number }}-Linux.deb
+          asset_name: ip_filter-0.0.${{ github.run_number }}-Linux.deb
           asset_content_type: application/vnd.debian.binary-package
