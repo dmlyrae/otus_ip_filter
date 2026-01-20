@@ -1,66 +1,29 @@
 /**
  * @file ip_filter.cpp
- * @brief Реализация функций фильтрации ip-адресов.
- * 
- * Комбинация отдельных паттернов в одну функцию фильтрации через паттерн strategy.
- * https://en.wikipedia.org/wiki/Strategy_pattern
+ * @brief Реализация функций фильтрации адресов через variadic-templates
  */
 
 #include "ip_filter.h"
 #include <algorithm>
-#include <iostream>
 
 // ============================================================================
-// СБОРЩИК ФИЛЬТРОВ
+// ФИЛЬТРАЦИЯ ПО ЛЮБОМУ ОКТЕТУ
 // ============================================================================
 
 /**
- * @brief Сборищик фильтров в одну функцию.
+ * @brief Фильтрация адресов, содержащих указанное значение в любом октете
  * 
- * реализует паттерн стратегия
- * принимает функцию-предикат, которая определяет условие фильтрации
+ * проверяет октеты адреса, возвращает true, если хотя бы один равен
  * 
- * @param ipPool вектор адресов (предполагается, что отсортирован)
- * @param predicate указатель (!) на предикат
- * предикат должен возвращать труе, если адрес проходит
- * 
+ * @param ipPool Вектор IP-адресов для фильтрации
+ * @param value Значение для поиска в любом из октетов
  */
-void filterIpAddresses(const std::vector<IpAddress>& ipPool, 
-    bool (*predicate)(const IpAddress&)) {
+void filter_any(const std::vector<IpAddress>& ipPool, uint8_t value) {
     for (const auto& ip : ipPool) {
-        if (predicate(ip)) {
+        if (ip.contains(value)) {
             std::cout << ip << '\n';
         }
     }
-}
-
-// ============================================================================
-// ПРЕДИКАТЫ ДЛЯ ФИЛЬТРАЦИИ
-// ============================================================================
-
-/**
- * @brief Предикат: проверяет, равен ли первый октет единице
- * 
- * Используется для фильтрации адресов вида 1.x.x.x
- */
-static bool firstOctetIsOne(const IpAddress& ip) {
-    return ip.octetEquals(0, 1);
-}
-
-/**
- * @brief Предикат для таска: проверяет, равен ли первый октет 46, а второй 70 
- * 
- * используется для фильтрации адресов вида 46.70.x.x
- */
-static bool first46Second70(const IpAddress& ip) {
-    return ip.octetEquals(0, 46) && ip.octetEquals(1, 70);
-}
-
-/**
- * @brief Предикат для таска: проверяет, содержит ли адрес октет со значением 46
- */
-static bool contains46(const IpAddress& ip) {
-    return ip.contains(46);
 }
 
 // ============================================================================
@@ -70,13 +33,16 @@ static bool contains46(const IpAddress& ip) {
 /**
  * @brief Обработка IP-адресов: сортировка и применение фильтров
  * 
- * алгоритм:
- * 1. проверяем, что пул не пуст
- * 2. Сортируем адреса в обратном лексик
- * 3. выводим все
- * 4. применяем три фильтра последовательно через filterIpAddresses
+ * Алгоритм:
+ * 1. Проверяем, что пул не пуст
+ * 2. Сортируем адреса в обратном лексикографическом
+ * 3. Выводим адреса
+ * 4. Применяем фильтры по заданию:
+ *    - filter(ipPool, 1)
+ *    - filter(ipPool, 46, 70)
+ *    - filter_any(ipPool, 46)
  * 
- * @param ipPool вектор адресов для обработки
+ * @param ipPool Вектор IP-адресов для обработки
  */
 void processIpAddresses(std::vector<IpAddress>& ipPool) {
     if (ipPool.empty()) {
@@ -84,18 +50,13 @@ void processIpAddresses(std::vector<IpAddress>& ipPool) {
         return;
     }
     
-    // сортировка в обратном лексикографическом
-    // через оператор < структуры IpAddress
     std::sort(ipPool.begin(), ipPool.end());
     
-    // Вывод
     for (const auto& ip : ipPool) {
         std::cout << ip << '\n';
     }
-    //////////////////////////////////////////////////////////////
     
-    filterIpAddresses(ipPool, firstOctetIsOne);
-    filterIpAddresses(ipPool, first46Second70);
-    filterIpAddresses(ipPool, contains46);
+    filter(ipPool, 1);
+    filter(ipPool, 46, 70);
+    filter_any(ipPool, 46);
 }
-
